@@ -1,0 +1,3 @@
+board/epii_evb/board.c:120:5:board_init	16	static
+board/epii_evb/board.c:345:5:board_deinit	8	static
+board/epii_evb/board.c:356:5:board_delay_ms	0	static
