@@ -1,287 +1,61 @@
-/**************************************************************************************************
- (C) COPYRIGHT, Himax Technologies, Inc. ALL RIGHTS RESERVED
- ------------------------------------------------------------------------
- File        : main.c
- Project     : EPII
- DATE        : 2021/04/01
- AUTHOR      : 902447
- BRIFE       : main function
- HISTORY     : Initial version - 2021/04/01 created by Jacky
- **************************************************************************************************/
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-
-
-#include "WE2_device.h"
 #include "WE2_core.h"
 #include "board.h"
-#ifdef LIB_COMMON
 #include "xprintf.h"
-#include "console_io.h"
-#endif
-#include "pinmux_init.h"
-#include "platform_driver_init.h"
+#include "hx_drv_scu_export.h"
+#include "hx_drv_scu.h"
+ 
+static volatile uint32_t cm55m_s_timer_event_cnt = 0;
+static volatile uint32_t cm55m_s_timer_event_flag = 0;
 
-#define CIS_XSHUT_SGPIO0
-
-#ifdef HM_COMMON
-#include "hx_drv_CIS_common.h"
-#endif
-#if defined(CIS_HM0360_MONO_REVB) || defined(CIS_HM0360_MONO_OSC_REVB) \
-	|| defined(CIS_HM0360_BAYER_REVB) || defined(CIS_HM0360_BAYER_OSC_REVB) \
-	||  defined(CIS_HM0360_MONO) || defined(CIS_HM0360_BAYER)
-#include "hx_drv_hm0360.h"
-#endif
-#ifdef CIS_HM11B1
-#include "hx_drv_hm11b1.h"
-#endif
-#if defined(CIS_HM01B0_MONO) || defined(CIS_HM01B0_BAYER)
-#include "hx_drv_hm01b0.h"
-#endif
-#ifdef CIS_HM2140
-#include "hx_drv_hm2140.h"
-#endif
-#ifdef CIS_XSHUT_SGPIO0
-#define DEAULT_XHSUTDOWN_PIN    AON_GPIO2 
-#else
-#define DEAULT_XHSUTDOWN_PIN    AON_GPIO2 
-#endif
-
-
-#ifdef ALLON_SENSOR_TFLM
-#include "allon_sensor_tflm.h"
-
-/** main entry */
-int main(void)
+void timer_event(uint32_t event)
 {
-	board_init();
-	app_main();
-	return 0;
+    cm55m_s_timer_event_cnt++;
+    cm55m_s_timer_event_flag = 1;
 }
-#endif
 
+int main(void) {
+    uint32_t version1;
+    uint32_t version2;
+    board_init();
 
-#ifdef ALLON_SENSOR_TFLM_FATFS
-#include "allon_sensor_tflm_fatfs.h"
+    TIMER_CFG_T cfg;
+    cfg.period = 1000;
+    cfg.mode = TIMER_MODE_PERIODICAL;
+    cfg.ctrl = TIMER_CTRL_CPU;
+    cfg.state = TIMER_STATE_DC;
 
-/** main entry */
-int main(void)
-{
-	board_init();
-	app_main();
-	return 0;
+    hx_drv_scu_set_PB0_pinmux(SCU_PB0_PINMUX_UART0_RX_1, 1);
+    hx_drv_scu_set_PB1_pinmux(SCU_PB1_PINMUX_UART0_TX_1, 1);
+    //hx_drv_scu_set_PB6_pinmux(SCU_PB6_PINMUX_UART1_RX);
+    //hx_drv_scu_set_PB7_pinmux(SCU_PB7_PINMUX_UART1_TX);
+
+    xprintf("core0 hello_word_s running ...\r\n");
+
+    xprintf("call scu_get_version\r\n");
+    SCU_ERROR_E ret1 = hx_drv_scu_get_version(&version1, &version2);
+    xprintf("ret = 0x%08X, version1 = 0x%08X, version1 = 0x%08X\r\n", ret1, version1, version1);
+
+    xprintf("call timer_cm55m_start\r\n");
+    TIMER_ERROR_E ret2 = hx_drv_timer_cm55m_start(&cfg, timer_event);
+    xprintf("ret = 0x%08X\r\n", ret2);
+
+    SCU_ERROR_E cm55sRet;
+    cm55sRet = hx_drv_scu_set_cm55s_state(SCU_CM55S_STATE_RESET);
+    xprintf("hx_drv_scu_set_cm55s_state(SCU_CM55S_STATE_RESET) returns 0x%d\r\n", cm55sRet);
+
+    cm55sRet = hx_drv_scu_set_cm55s_state(SCU_CM55S_STATE_NORMAL);
+    xprintf("hx_drv_scu_set_cm55s_state(SCU_CM55S_STATE_NORMAL) returns 0x%d\r\n", cm55sRet);
+
+    cm55sRet = hx_drv_scu_set_CM55S_CPUWAIT(SCU_CM55_CPU_RUN);
+    xprintf("hx_drv_scu_set_CM55S_CPUWAIT(SCU_CM55_CPU_RUN) returns 0x%d\r\n", cm55sRet);
+    
+
+    while (1) {
+      if (cm55m_s_timer_event_flag) {
+          cm55m_s_timer_event_flag = 0;
+          xprintf("cm55m_s_event_cnt = 0x%08X \r\n", cm55m_s_timer_event_cnt);
+      }
+    }
+
+    for(;;) {}
 }
-#endif
-
-
-#ifdef ALLON_SENSOR_TFLM_FREERTOS
-#include "allon_sensor_tflm.h"
-
-/** main entry */
-int main(void)
-{
-	board_init();
-	app_main();
-	return 0;
-}
-#endif
-
-
-#ifdef HELLO_WORLD_FREERTOS_TZ_S_ONLY
-#include "hello_world_freertos_tz_s_only.h"
-
-/** main entry */
-int main(void)
-{
-	board_init();
-	app_main();
-	return 0;
-}
-#endif
-
-
-#ifdef TFLM_FD_FM
-#include "tflm_fd_fm.h"
-
-/** main entry */
-int main(void)
-{
-	board_init();
-	app_main();
-	return 0;
-}
-#endif
-
-
-#ifdef FATFS_TEST
-#include "fatfs_test.h"
-
-/** main entry */
-int main(void)
-{
-	board_init();
-	fatfs_test();
-	return 0;
-}
-#endif
-
-
-#ifdef TFLM_YOLOV8_OD
-#include "tflm_yolov8_od.h"
-
-/** main entry */
-int main(void)
-{
-	board_init();
-	tflm_yolov8_od_app();
-	return 0;
-}
-#endif
-
-
-#ifdef TFLM_YOLOV8_POSE
-#include "tflm_yolov8_pose.h"
-
-/** main entry */
-int main(void)
-{
-	board_init();
-	tflm_yolov8_pose_app();
-	return 0;
-}
-#endif
-
-
-#ifdef TFLM_2IN1_FD_FL_FR_ENROLL_YOLOV8
-#include "tflm_2in1_fd_fl_fr_enroll_yolov8.h"
-
-/** main entry */
-int main(void)
-{
-	board_init();
-	app_main();
-	return 0;
-}
-#endif
-
-
-#ifdef PDM_RECORD
-#include "pdm_record.h"
-
-/** main entry */
-int main(void)
-{
-	board_init();
-	app_main();
-	return 0;
-}
-#endif
-
-
-#ifdef IMU_READ_APP
-#include "imu_read_app.h"
-
-/* main entry */
-int main(void)
-{
-	board_init();
-	app_main();
-	return 0;
-}
-#endif
-
-
-#ifdef HELLO_WORLD_CMSIS_DSP
-#include "hello_world_cmsis_dsp.h"
-
-/** main entry */
-int main(void)
-{
-	board_init();
-	app_main();
-	return 0;
-}
-#endif
-
-#ifdef HELLO_WORLD_CMSIS_CV
-#include "hello_world_cmsis_cv.h"
-
-/** main entry */
-int main(void)
-{
-	board_init();
-	app_main();
-	return 0;
-}
-#endif
-
-#ifdef EI_STANDALONE_INFERENCING
-#include "ei_standalone_inferencing.h"
-
-int main(void)
-{
-	board_init();
-	ei_standalone_inferencing_app();
-
-	return 0;
-}
-#endif
-
-#ifdef EI_STANDALONE_INFERENCING_CAMERA
-#include "ei_standalone_inferencing_camera.h"
-
-int main(void)
-{
-	board_init();
-	ei_standalone_inferencing_app();
-
-	return 0;
-}
-#endif
-
-#ifdef EDGE_IMPULSE_FIRMWARE
-#include "edge_impulse_firmware.h"
-
-int main(void)
-{
-	/*set pinmux init*/
-	pinmux_init();
-	/*platform driver init*/
-	platform_driver_init();
-#ifdef IP_uart
-	console_setup(USE_DW_UART_0, UART_BAUDRATE_115200);
-#endif
-#ifdef LIB_COMMON
-	xprintf_setup();
-#endif
-	edge_impulse_app();
-
-	return 0;
-}
-#endif
-
-#ifdef KWS_PDM_RECORD
-#include "kws_pdm_record.h"
-
-/* main entry */
-int main(void)
-{
-	board_init();
-	kws_pdm_record_app();
-	return 0;
-}
-#endif
-
-
-#ifdef TFLM_PEOPLENET
-#include "tflm_peoplenet.h"
-/** main entry */
-int main(void)
-{
-	board_init();
-	tflm_peoplenet_app();
-	return 0;
-}
-#endif
-
