@@ -3,7 +3,7 @@ This project serves as a template of dual core application for Grove Vision AI M
 
 
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPL_v3-blue.svg)](https://github.com/teamprof/we2-dual/blob/main/LICENSE)
+[![License: GPL v3](https://img.shields.io/badge/License-GPL_v3-blue.svg)](https://github.com/teamprof/we2-sdk/blob/main/LICENSE)
 
 <a href="https://www.buymeacoffee.com/teamprof" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 28px !important;width: 108px !important;" ></a>
 
@@ -15,6 +15,36 @@ The following components are required for this project:
 
 ---
 ## Build firmware on the Grove Vision AI Module v2 (WE2)
+### Clone repo
+```
+git clone https://github.com/teamprof/we2-sdk
+cd we2-sdk
+```
+
+### Build CM55 big core app
+```
+cd EPII_CM55M_APP_S
+make clean
+make -f makefile-we2-gui
+```
+
+### Build CM55 little core app
+```
+cd EPII_CM55S_APP_S
+make clean
+make -f makefile-we2-gui
+```
+
+### Generate image file 
+```
+cd ../we2_image_gen_local/
+cp ../EPII_CM55M_APP_S/obj_epii_evb_icv30_bdv10/gnu_epii_evb_WLCSP65/EPII_CM55M_gnu_epii_evb_WLCSP65_s.elf input_case3_secboot/
+cp ../EPII_CM55S_APP_S/obj_epii_evb_icv30_bdv10/gnu_epii_evb_WLCSP65/EPII_CM55S_gnu_epii_evb_WLCSP65_s.elf input_case3_secboot/
+
+./we2_local_image_gen project_case3_blp_wlcsp.json
+
+Output firmware image: ./output_case3_sec_wlcsp/output.img
+```
 
 ---
 
@@ -22,6 +52,11 @@ The following components are required for this project:
 Please refer to README-org.md about the steps to flash firmware on Grove Vision AI Module v2 
 
 
+---
+
+## Current issue
+### Only big core runs normally, little core doesn't.
+[![we2-run](/doc/image/we2-run.png)](https://github.com/teamprof/we2-sdk/blob/main/doc/image/cover-image.png)
 ---
 
 
@@ -49,7 +84,7 @@ Sometimes, the project will only work if you update the board core to the latest
 
 ---
 ### Issues
-Submit issues to: [github-we2-dual issues](https://github.com/teamprof/we2-dual/issues) 
+Submit issues to: [github-we2-sdk issues](https://github.com/teamprof/we2-sdk/issues) 
 
 ---
 ### TO DO
